@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="16" fill="#0b1d14" />
+  <rect x="3" y="3" width="58" height="58" rx="13" fill="none" stroke="#d4a95a" stroke-width="1.5" stroke-opacity="0.8" />
+  <rect x="5.5" y="5.5" width="53" height="53" rx="10.5" fill="none" stroke="#d4a95a" stroke-width="0.8" stroke-opacity="0.4" />
+  <!-- Stem -->
+  <path d="M32 46 L32 28" stroke="#d4a95a" stroke-width="2.5" stroke-linecap="round" />
+  <!-- Left gold leaf -->
+  <path d="M32 34 C26 34 22 30 22 25 C28 25 32 29 32 34 Z" fill="#d4a95a" />
+  <!-- Right sage green leaf -->
+  <path d="M32 31 C32 23 37 18 43 18 C43 25 38 31 32 31 Z" fill="#9ec4aa" />
+</svg>
