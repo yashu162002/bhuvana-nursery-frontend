@@ -57,4 +57,8 @@ public interface PlantRepository extends JpaRepository<Plant, UUID> {
     boolean existsBySlug(String slug);
 
     boolean existsBySlugAndIdNot(String slug, UUID id);
+
+    boolean existsByImageUrl(String imageUrl);
+
+    long countByImageUrlStartingWith(String prefix);
 }

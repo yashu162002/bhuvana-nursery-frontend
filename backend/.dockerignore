@@ -1,0 +1,10 @@
+target
+run
+uploads
+.env
+.env.*
+!.env.example
+*.log
+.git
+.idea
+.vscode

@@ -13,4 +13,8 @@ public interface HeroSlideRepository extends JpaRepository<HeroSlide, UUID> {
     List<HeroSlide> findAllByActiveTrueOrderByDisplayOrderAscCreatedAtAsc();
 
     List<HeroSlide> findAllByOrderByDisplayOrderAscCreatedAtAsc();
+
+    boolean existsByImageUrl(String imageUrl);
+
+    long countByImageUrlStartingWith(String prefix);
 }

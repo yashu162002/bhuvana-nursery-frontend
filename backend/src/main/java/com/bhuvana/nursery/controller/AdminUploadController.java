@@ -1,38 +1,49 @@
 package com.bhuvana.nursery.controller;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.bhuvana.nursery.storage.ImageStorage;
+import com.bhuvana.nursery.storage.ImageStorageException;
+import com.bhuvana.nursery.storage.StoredImage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 
+/**
+ * Admin image upload endpoint. The public API is unchanged; the bytes are
+ * handed to the configured {@link ImageStorage} so production can persist them
+ * in Cloudflare R2 instead of the ephemeral Render filesystem.
+ */
 @RestController
 @RequestMapping("/api/v1/admin/uploads")
 public class AdminUploadController {
 
+    private static final Logger log = LoggerFactory.getLogger(AdminUploadController.class);
+
     private static final long MAX_BYTES = 5L * 1024 * 1024;
+    private static final int MAX_DIMENSION = 6_000;
+    private static final long MAX_PIXELS = 24_000_000L;
 
-    private static final Set<String> ALLOWED_TYPES =
-            Set.of("image/jpeg", "image/png");
+    private final ImageStorage imageStorage;
 
-    private final Path uploadDirectory;
-
-    public AdminUploadController(
-            @Value("${app.upload.directory:./uploads}") String directory
-    ) {
-        this.uploadDirectory = Path.of(directory)
-                .toAbsolutePath()
-                .normalize();
+    public AdminUploadController(ImageStorage imageStorage) {
+        this.imageStorage = imageStorage;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -47,49 +58,100 @@ public class AdminUploadController {
             );
         }
 
-        String contentType = file.getContentType();
-        if (contentType == null ||
-                !ALLOWED_TYPES.contains(contentType.toLowerCase(Locale.ROOT))) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Only JPEG and PNG images are accepted."
-            );
-        }
+        byte[] content = file.getBytes();
+        ImageFormat format = inspectImage(content);
 
-        // Decode the image rather than trusting the filename or MIME type alone.
-        try (var input = file.getInputStream()) {
-            if (ImageIO.read(input) == null) {
-                throw new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST,
-                        "The uploaded file is not a valid supported image."
-                );
-            }
-        }
-
-        String extension = "image/png".equalsIgnoreCase(contentType)
-                ? ".png"
-                : ".jpg";
-
-        Files.createDirectories(uploadDirectory);
-
-        String filename = UUID.randomUUID() + extension;
-        Path target = uploadDirectory.resolve(filename).normalize();
-
-        if (!target.startsWith(uploadDirectory)) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Invalid upload filename."
-            );
-        }
-
-        // CREATE_NEW prevents accidentally overwriting an existing file.
-        try (var input = file.getInputStream()) {
-            Files.copy(input, target);
-        }
+        StoredImage stored = imageStorage.store(
+                content, format.contentType(), format.extension());
 
         return Map.of(
-                "url", "/uploads/" + filename,
-                "filename", filename
+                "url", stored.url(),
+                "filename", stored.filename()
         );
+    }
+
+    @ExceptionHandler(ImageStorageException.class)
+    public ResponseEntity<Map<String, String>> handleStorageFailure(
+            ImageStorageException exception
+    ) {
+        log.warn("Image upload failed (storage backend error: {}).",
+                exception.getClass().getSimpleName());
+
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Map.of(
+                        "message",
+                        "Image storage is temporarily unavailable. Please try again."
+                ));
+    }
+
+    /**
+     * Validates the real image format instead of trusting the browser-supplied
+     * MIME type or filename. SVG (scriptable) and every non-JPEG/PNG format
+     * are rejected, and huge decompression bombs are refused before decoding.
+     */
+    private ImageFormat inspectImage(byte[] content) {
+        try (ImageInputStream input =
+                     ImageIO.createImageInputStream(new ByteArrayInputStream(content))) {
+
+            if (input == null) {
+                throw invalidImage("The uploaded file is not a valid supported image.");
+            }
+
+            Iterator<ImageReader> readers = ImageIO.getImageReaders(input);
+
+            if (!readers.hasNext()) {
+                throw invalidImage("The uploaded file is not a valid supported image.");
+            }
+
+            ImageReader reader = readers.next();
+
+            try {
+                reader.setInput(input);
+
+                int width = reader.getWidth(0);
+                int height = reader.getHeight(0);
+
+                if (width <= 0 || height <= 0
+                        || width > MAX_DIMENSION || height > MAX_DIMENSION
+                        || (long) width * height > MAX_PIXELS) {
+                    throw invalidImage(
+                            "Image dimensions are too large (maximum 6000 px and 24 megapixels)."
+                    );
+                }
+
+                if (reader.read(0) == null) {
+                    throw invalidImage("The uploaded file is not a valid supported image.");
+                }
+
+                return formatOf(reader.getFormatName());
+            } finally {
+                reader.dispose();
+            }
+        } catch (IOException exception) {
+            throw invalidImage("The uploaded file is not a valid supported image.");
+        }
+    }
+
+    private ImageFormat formatOf(String formatName) {
+        String normalized = formatName == null
+                ? ""
+                : formatName.toLowerCase(Locale.ROOT);
+
+        if ("png".equals(normalized)) {
+            return new ImageFormat("image/png", ".png");
+        }
+
+        if ("jpeg".equals(normalized) || "jpg".equals(normalized)) {
+            return new ImageFormat("image/jpeg", ".jpg");
+        }
+
+        throw invalidImage("Only JPEG and PNG images are accepted.");
+    }
+
+    private ResponseStatusException invalidImage(String message) {
+        return new ResponseStatusException(HttpStatus.BAD_REQUEST, message);
+    }
+
+    private record ImageFormat(String contentType, String extension) {
     }
 }

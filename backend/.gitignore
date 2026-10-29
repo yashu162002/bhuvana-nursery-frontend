@@ -35,6 +35,9 @@ build/
 # Local uploads
 /uploads/
 
+# Copy of the packaged jar used by run-backend.ps1
+/run/
+
 # Environment files and secrets
 .env
 .env.*

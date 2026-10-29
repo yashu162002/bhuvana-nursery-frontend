@@ -1,0 +1,49 @@
+# Netlify configuration for the Bhuvana Nursery frontend.
+#
+# Deploy the monorepo and let Netlify use the `frontend` directory as its base.
+# Replace REPLACE-WITH-YOUR-RENDER-SERVICE with the actual Render hostname
+# (for example bhuvana-nursery-api.onrender.com). Netlify does not substitute
+# environment variables inside redirect targets, so this one edit is required.
+#
+# The /api and /uploads proxy keeps the browser on one origin. That is what
+# makes the HttpOnly session cookie and the CSRF cookie first-party; do not
+# replace it with a cross-site VITE_API_BASE_URL unless you also configure
+# CORS_ALLOWED_ORIGINS and COOKIE_SAME_SITE=None on the backend.
+
+[build]
+  base = "frontend"
+  command = "npm ci && npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# API proxy (preserves /api/v1/... and query strings).
+[[redirects]]
+  from = "/api/*"
+  to = "https://REPLACE-WITH-YOUR-RENDER-SERVICE.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# Legacy/local image paths stored in the database. New uploads live in R2 and
+# use absolute URLs, so this proxy mainly keeps older records working.
+[[redirects]]
+  from = "/uploads/*"
+  to = "https://REPLACE-WITH-YOUR-RENDER-SERVICE.onrender.com/uploads/:splat"
+  status = 200
+  force = true
+
+# SPA fallback: refreshing /plants/foo or /admin/... must not 404.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"

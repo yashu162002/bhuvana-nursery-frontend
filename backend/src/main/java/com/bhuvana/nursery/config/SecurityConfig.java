@@ -1,5 +1,6 @@
 package com.bhuvana.nursery.config;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,9 +11,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -22,7 +21,6 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.CsrfTokenRequestHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.util.StringUtils;
 
 import java.util.function.Supplier;
 
@@ -34,26 +32,12 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService(
-            PasswordEncoder passwordEncoder,
-            @Value("${ADMIN_USERNAME:nurseryadmin}") String username,
-            @Value("${ADMIN_PASSWORD:Admin@Bhuvana2026}") String password
-    ) {
-        if (!StringUtils.hasText(username) ||
-            !StringUtils.hasText(password)) {
-            throw new IllegalStateException(
-                "Set ADMIN_USERNAME and ADMIN_PASSWORD before starting the backend."
-            );
-        }
-
-        return new InMemoryUserDetailsManager(
-            User.withUsername(username)
-                .password(passwordEncoder.encode(password))
-                .roles("ADMIN")
-                .build()
-        );
-    }
+    /**
+     * The administrator is loaded from PostgreSQL (DatabaseAdminUserDetailsService),
+     * so a password set through the reset flow persists across restarts. The
+     * first account is still seeded from ADMIN_USERNAME / ADMIN_PASSWORD by
+     * AdminUserInitializer while the table is empty.
+     */
 
     @Bean
     public AuthenticationManager authenticationManager(
@@ -75,7 +59,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            SecurityContextRepository securityContextRepository
+            SecurityContextRepository securityContextRepository,
+            @Value("${app.security.cookie-secure:false}") boolean secureCookies,
+            @Value("${app.security.cookie-same-site:Lax}") String cookieSameSite
     ) throws Exception {
 
         CookieCsrfTokenRepository csrfRepository =
@@ -83,11 +69,12 @@ public class SecurityConfig {
 
         csrfRepository.setCookiePath("/");
         csrfRepository.setCookieCustomizer(cookie -> cookie
-                .sameSite("Lax")
-                .secure(false)
+                .sameSite(cookieSameSite)
+                .secure(secureCookies)
         );
 
         http
+            .cors(cors -> {})
             .securityContext(context -> context
                 .securityContextRepository(securityContextRepository)
             )
@@ -96,9 +83,14 @@ public class SecurityConfig {
                 .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
             )
             .authorizeHttpRequests(auth -> auth
+                // Let Spring Boot render error responses (404/500) instead of
+                // masking them as 401 through the security chain.
+                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
                 .requestMatchers(
                     "/api/v1/auth/csrf",
                     "/api/v1/auth/login",
+                    "/api/v1/auth/password/forgot",
+                    "/api/v1/auth/password/reset",
                     "/actuator/health",
                     "/api/v1/health",
                     "/uploads/**"

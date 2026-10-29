@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -27,9 +28,14 @@ public class HeroSlideService {
     );
 
     private final HeroSlideRepository repository;
+    private final ImageCleanup imageCleanup;
 
-    public HeroSlideService(HeroSlideRepository repository) {
+    public HeroSlideService(
+            HeroSlideRepository repository,
+            ImageCleanup imageCleanup
+    ) {
         this.repository = repository;
+        this.imageCleanup = imageCleanup;
     }
 
     @Transactional(readOnly = true)
@@ -69,6 +75,8 @@ public class HeroSlideService {
     @Transactional
     public HeroSlideResponse update(UUID id, HeroSlideRequest request) {
         HeroSlide slide = findSlide(id);
+        String previousImageUrl = slide.getImageUrl();
+
         slide.setImageUrl(request.imageUrl().trim());
         slide.setAltText(request.altText() != null ? request.altText().trim() : null);
         slide.setTitleKn(request.titleKn() != null ? request.titleKn().trim() : null);
@@ -76,7 +84,13 @@ public class HeroSlideService {
         slide.setDisplayOrder(request.displayOrder());
         slide.setActive(request.active());
 
-        return toResponse(repository.save(slide));
+        HeroSlide saved = repository.save(slide);
+
+        if (!Objects.equals(previousImageUrl, saved.getImageUrl())) {
+            imageCleanup.deleteWhenUnusedAfterCommit(previousImageUrl);
+        }
+
+        return toResponse(saved);
     }
 
     @Transactional
@@ -89,7 +103,10 @@ public class HeroSlideService {
     @Transactional
     public void delete(UUID id) {
         HeroSlide slide = findSlide(id);
+        String previousImageUrl = slide.getImageUrl();
+
         repository.delete(slide);
+        imageCleanup.deleteWhenUnusedAfterCommit(previousImageUrl);
     }
 
     @Transactional
@@ -106,6 +123,11 @@ public class HeroSlideService {
 
     @Transactional
     public List<HeroSlideResponse> resetToDefaults() {
+        List<String> previousImageUrls = repository.findAll()
+                .stream()
+                .map(HeroSlide::getImageUrl)
+                .toList();
+
         repository.deleteAll();
         for (DefaultSlide def : DEFAULT_SLIDES) {
             HeroSlide slide = new HeroSlide();
@@ -117,6 +139,9 @@ public class HeroSlideService {
             slide.setActive(true);
             repository.save(slide);
         }
+
+        previousImageUrls.forEach(imageCleanup::deleteWhenUnusedAfterCommit);
+
         return getAllSlides();
     }
 

@@ -14,6 +14,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.net.URI;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -21,13 +22,16 @@ public class PlantAdminService {
 
     private final PlantRepository plantRepository;
     private final PlantCategoryRepository categoryRepository;
+    private final ImageCleanup imageCleanup;
 
     public PlantAdminService(
             PlantRepository plantRepository,
-            PlantCategoryRepository categoryRepository
+            PlantCategoryRepository categoryRepository,
+            ImageCleanup imageCleanup
     ) {
         this.plantRepository = plantRepository;
         this.categoryRepository = categoryRepository;
+        this.imageCleanup = imageCleanup;
     }
 
     @Transactional(readOnly = true)
@@ -60,9 +64,18 @@ public class PlantAdminService {
         validateRequest(request);
 
         Plant plant = findPlant(id);
+        String previousImageUrl = plant.getImageUrl();
         applyRequest(plant, request);
 
-        return toResponse(plantRepository.save(plant));
+        Plant saved = plantRepository.save(plant);
+
+        // Remove a replaced upload only after the new URL is committed, and
+        // only when no other record still references the old one.
+        if (!Objects.equals(previousImageUrl, saved.getImageUrl())) {
+            imageCleanup.deleteWhenUnusedAfterCommit(previousImageUrl);
+        }
+
+        return toResponse(saved);
     }
 
     @Transactional
@@ -93,7 +106,10 @@ public class PlantAdminService {
     @Transactional
     public void deletePermanent(UUID id) {
         Plant plant = findPlant(id);
+        String previousImageUrl = plant.getImageUrl();
+
         plantRepository.delete(plant);
+        imageCleanup.deleteWhenUnusedAfterCommit(previousImageUrl);
     }
 
     private void applyRequest(Plant plant, PlantAdminRequest request) {
