@@ -10,6 +10,8 @@ import {
 import App from './App';
 import PlantDetailPage from './features/plants/PlantDetailPage';
 import AdminLoginPage from './features/admin/AdminLoginPage';
+import AdminForgotPasswordPage from './features/admin/AdminForgotPasswordPage';
+import AdminResetPasswordPage from './features/admin/AdminResetPasswordPage';
 import AdminDashboard from './features/admin/AdminDashboard';
 import PlantManagement from './features/admin/PlantManagement';
 import CategoryManagement from './features/admin/CategoryManagement';
@@ -86,6 +88,14 @@ export default function AppRouter() {
           <Route path="/plants/:slug" element={<PlantDetailRoute />} />
         </Route>
         <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route
+          path="/admin/forgot-password"
+          element={<AdminForgotPasswordPage />}
+        />
+        <Route
+          path="/admin/reset-password"
+          element={<AdminResetPasswordPage />}
+        />
         <Route
           path="/admin/dashboard"
           element={

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Leaf, Search } from 'lucide-react'
 import { getCategories, getPlants } from '../../api/plantApi'
+import { assetUrl } from '../../config/siteConfig'
 import { createPlantWhatsAppUrl } from '../../utils/whatsapp'
 import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion } from '../../lib/gsap'
 import WordReveal from '../../components/luxury/WordReveal'
@@ -23,6 +24,8 @@ const emptyPage: PlantPage = {
 
 interface PlantCatalogueProps {
   kannada?: boolean
+  /** Category pre-selected when the catalogue is mounted from a category card. */
+  initialCategory?: string
 }
 
 function availabilityLabel(
@@ -42,16 +45,23 @@ function availabilityLabel(
 
 export default function PlantCatalogue({
   kannada = true,
+  initialCategory = '',
 }: PlantCatalogueProps) {
   const [categories, setCategories] = useState<PlantCategory[]>([])
   const [catalogue, setCatalogue] = useState<PlantPage>(emptyPage)
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('')
+  const [category, setCategory] = useState(initialCategory)
   const [page, setPage] = useState(0)
-  const [loading, setLoading] = useState(true)
+  const [loadedKey, setLoadedKey] = useState('')
   const [error, setError] = useState('')
   const [retryCount, setRetryCount] = useState(0)
+
+  // Loading is derived (rather than written inside the effect), so a request
+  // that is in flight is always reflected without an extra render pass.
+  const requestKey = `${page}|${search}|${category}|${kannada}|${retryCount}`
+  const loading = loadedKey !== requestKey
+  const visibleError = loading ? '' : error
   const section = useRef<HTMLElement>(null)
 
   // Cards glide in one after another each time a new page of plants arrives.
@@ -110,9 +120,6 @@ export default function PlantCatalogue({
   useEffect(() => {
     let cancelled = false
 
-    setLoading(true)
-    setError('')
-
     getPlants({
       page,
       size: 12,
@@ -120,7 +127,10 @@ export default function PlantCatalogue({
       category: category || undefined,
     })
       .then((data) => {
-        if (!cancelled) setCatalogue(data)
+        if (!cancelled) {
+          setCatalogue(data)
+          setError('')
+        }
       })
       .catch(() => {
         if (!cancelled) {
@@ -132,7 +142,9 @@ export default function PlantCatalogue({
         }
       })
       .finally(() => {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          setLoadedKey(`${page}|${search}|${category}|${kannada}|${retryCount}`)
+        }
       })
 
     return () => {
@@ -218,9 +230,9 @@ export default function PlantCatalogue({
         ))}
       </div>
 
-      {error && (
+      {visibleError && (
         <div className="catalogue-message catalogue-error" role="alert">
-          <p>{error}</p>
+          <p>{visibleError}</p>
           <button
             type="button"
             onClick={() => setRetryCount((count) => count + 1)}
@@ -237,7 +249,7 @@ export default function PlantCatalogue({
         </div>
       )}
 
-      {!loading && !error && catalogue.content.length === 0 && (
+      {!loading && !visibleError && catalogue.content.length === 0 && (
         <div className="catalogue-message">
           {kannada
             ? 'ಈ ಹುಡುಕಾಟಕ್ಕೆ ಸಸ್ಯಗಳು ಕಂಡುಬಂದಿಲ್ಲ.'
@@ -253,7 +265,7 @@ export default function PlantCatalogue({
                 <div className="catalogue-image">
                   {plant.imageUrl ? (
                     <img
-                      src={plant.imageUrl}
+                      src={assetUrl(plant.imageUrl) ?? plant.imageUrl}
                       alt={kannada ? plant.nameKn : plant.nameEn}
                       loading="lazy"
                     />
@@ -359,7 +371,6 @@ export default function PlantCatalogue({
             <div>
               <button
                 type="button"
-                aria-label="Previous page"
                 disabled={catalogue.first || loading}
                 onClick={() => setPage((current) => Math.max(0, current - 1))}
               >
@@ -375,7 +386,6 @@ export default function PlantCatalogue({
 
               <button
                 type="button"
-                aria-label="Next page"
                 disabled={catalogue.last || loading}
                 onClick={() => setPage((current) => current + 1)}
               >

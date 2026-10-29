@@ -104,6 +104,12 @@ export default function AdminLoginPage() {
           >
             {loading ? 'Signing in…' : 'Sign in securely'}
           </button>
+
+          <p className="admin-login-links">
+            <Link to="/admin/forgot-password" className="admin-forgot-link">
+              Forgot password?
+            </Link>
+          </p>
         </form>
 
         <Link to="/" className="admin-back-home">

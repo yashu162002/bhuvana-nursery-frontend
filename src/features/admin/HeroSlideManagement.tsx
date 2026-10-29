@@ -37,6 +37,7 @@ import {
   type HeroSlideFormData,
 } from '../../api/adminHeroSlideApi';
 import { uploadPlantImage } from '../../api/imageUploadApi';
+import { assetUrl } from '../../config/siteConfig';
 
 const emptyForm: HeroSlideFormData = {
   imageUrl: '',
@@ -67,11 +68,10 @@ export default function HeroSlideManagement() {
   const modalFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadData = useCallback(async () => {
-    setLoading(true);
-    setError('');
     try {
       const data = await getAdminHeroSlides();
       setSlides(data);
+      setError('');
     } catch {
       setError('Could not load hero slides. Please verify your admin session.');
     } finally {
@@ -80,8 +80,27 @@ export default function HeroSlideManagement() {
   }, []);
 
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    let active = true;
+
+    getAdminHeroSlides()
+      .then((data) => {
+        if (!active) return;
+        setSlides(data);
+        setError('');
+      })
+      .catch(() => {
+        if (active) {
+          setError('Could not load hero slides. Please verify your admin session.');
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Quick replacement of photo for a specific slide slot
   function triggerSlotUpload(slideId: string) {
@@ -480,7 +499,7 @@ export default function HeroSlideManagement() {
                   {/* Image Preview & Replacement Box */}
                   <div className="hero-slide-image-box">
                     <img
-                      src={slide.imageUrl}
+                      src={assetUrl(slide.imageUrl) ?? slide.imageUrl}
                       alt={slide.altText || slide.titleEn || 'Hero slide'}
                       className="hero-slide-thumb"
                       onError={(e) => {
@@ -611,7 +630,7 @@ export default function HeroSlideManagement() {
                   <div className="hero-modal-image-preview">
                     {form.imageUrl ? (
                       <div className="hero-preview-frame">
-                        <img src={form.imageUrl} alt="Slide preview" />
+                        <img src={assetUrl(form.imageUrl) ?? form.imageUrl} alt="Slide preview" />
                         <button
                           type="button"
                           className="hero-preview-remove"

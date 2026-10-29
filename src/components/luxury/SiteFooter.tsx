@@ -61,7 +61,7 @@ export default function SiteFooter() {
 
         <div className="lx-foot-rule" />
 
-        <div className="lx-foot-wordmark" aria-label="Bhoovana Nursery">
+        <div className="lx-foot-wordmark" role="img" aria-label="Bhoovana Nursery">
           {(isKannada ? ['ಭೂವನ', 'ನರ್ಸರಿ'] : ['Bhoovana', 'Nursery']).map((word) => (
             <span className="lx-foot-w" key={word} aria-hidden="true">
               <span className="lx-foot-wi">{word}</span>
@@ -73,6 +73,16 @@ export default function SiteFooter() {
           <span>
             © {new Date().getFullYear()} {siteConfig.name} ·{' '}
             {isKannada ? 'ಎಲ್ಲ ಹಕ್ಕುಗಳನ್ನು ಕಾಯ್ದಿರಿಸಲಾಗಿದೆ' : 'All rights reserved'}
+          </span>
+          <span className="lx-foot-dev-credit" aria-label="Designed and Developed by Yaश Tech">
+            <span className="lx-foot-dev-line" aria-hidden="true" />
+            <span className="lx-foot-dev-by">Designed &amp; Developed by</span>
+            <span className="lx-foot-dev-brand">
+              <span className="lx-foot-dev-name">
+                Yaಶ Tech<sup className="lx-foot-dev-reg">®</sup>
+              </span>
+              <span className="lx-foot-dev-underline" aria-hidden="true" />
+            </span>
           </span>
           <span>Chitradurga · Karnataka · India</span>
         </div>

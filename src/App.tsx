@@ -31,10 +31,10 @@ const PHONE_NUMBER = siteConfig.phoneNumber
 const MAP_LINK = siteConfig.mapLink
 
 const categories = [
-  { name: 'ಹಣ್ಣಿನ ಸಸಿಗಳು', english: 'Fruit plants', icon: Flower2, category: 'fruit' },
-  { name: 'ಕೃಷಿ ಸಸಿಗಳು', english: 'Agricultural plants', icon: Sprout, category: 'agriculture' },
-  { name: 'ಮರಗಳು', english: 'Trees & shade', icon: Trees, category: 'trees' },
-  { name: 'ನೈಸರ್ಗಿಕ ಗೊಬ್ಬರ', english: 'Natural manure', icon: Leaf, category: 'manure' },
+  { name: 'ಹಣ್ಣಿನ ಸಸಿಗಳು', english: 'Fruit plants', icon: Flower2, category: 'fruit', slug: 'fruit-plants' },
+  { name: 'ಕೃಷಿ ಸಸಿಗಳು', english: 'Agricultural plants', icon: Sprout, category: 'agriculture', slug: 'agricultural-plants' },
+  { name: 'ಮರಗಳು', english: 'Trees & shade', icon: Trees, category: 'trees', slug: 'trees' },
+  { name: 'ನೈಸರ್ಗಿಕ ಗೊಬ್ಬರ', english: 'Natural manure', icon: Leaf, category: 'manure', slug: 'natural-manure' },
 ]
 
 const INTRO_KEY = 'bhoovana-intro-seen'
@@ -58,6 +58,10 @@ function App() {
   )
   const [revealed, setRevealed] = useState(!showIntro)
   const [introGone, setIntroGone] = useState(!showIntro)
+  // Set when a category card is clicked; PlantCatalogue applies the filter.
+  const [categoryRequest, setCategoryRequest] = useState<
+    { slug: string; nonce: number } | undefined
+  >()
   const ready = revealed
 
   useInteractions(root)
@@ -212,6 +216,16 @@ function App() {
 
   const goTo = (selector: string) => scrollToTarget(selector, { offset: -10 })
 
+  function browseCategory(slug: string) {
+    // Changing the key remounts the catalogue with the chosen filter, so
+    // clicking the same card twice starts from a clean, filtered state.
+    setCategoryRequest((previous) => ({
+      slug,
+      nonce: (previous?.nonce ?? 0) + 1,
+    }))
+    goTo('#plants')
+  }
+
   const marqueeItems = isKannada
     ? categories.map((c) => c.name)
     : categories.map((c) => c.english)
@@ -271,7 +285,7 @@ function App() {
                     className="lx-cat"
                     data-tilt
                     key={category.category}
-                    onClick={() => goTo('#plants')}
+                    onClick={() => browseCategory(category.slug)}
                   >
                     <span
                       className="lx-cat-media"
@@ -322,7 +336,11 @@ function App() {
 
         {/* ---------------------------------------------------------- catalogue */}
         <div className="lx-catalogue-wrap">
-          <PlantCatalogue kannada={isKannada} />
+          <PlantCatalogue
+            key={categoryRequest?.nonce ?? 0}
+            kannada={isKannada}
+            initialCategory={categoryRequest?.slug}
+          />
         </div>
 
         {/* ---------------------------------------------------------- about */}

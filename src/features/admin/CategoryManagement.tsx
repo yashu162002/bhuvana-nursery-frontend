@@ -30,7 +30,6 @@ export default function CategoryManagement() {
   const [notice, setNotice] = useState('');
 
   const refresh = useCallback(async () => {
-    setLoading(true);
     try {
       setCategories(await getAdminCategories());
       setError('');
@@ -42,8 +41,27 @@ export default function CategoryManagement() {
   }, []);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let active = true;
+
+    getAdminCategories()
+      .then((data) => {
+        if (!active) return;
+        setCategories(data);
+        setError('');
+      })
+      .catch(() => {
+        if (active) {
+          setError('Could not load categories. Check your admin session.');
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function change<K extends keyof CategoryFormData>(
     key: K,

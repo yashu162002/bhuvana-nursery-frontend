@@ -1,5 +1,6 @@
 import { ArrowUpRight, MessageCircle } from 'lucide-react'
 import type { Plant } from '../features/plants/plantTypes'
+import { assetUrl } from '../config/siteConfig'
 
 type PlantCardProps = {
   plant: Plant
@@ -13,6 +14,7 @@ export default function PlantCard({
   whatsappNumber = '',
 }: PlantCardProps) {
   const isKannada = language === 'kn'
+  const imageUrl = assetUrl(plant.imageUrl)
 
   const message = isKannada
     ? `ನಮಸ್ಕಾರ, ನನಗೆ ${plant.nameKn} (${plant.nameEn}) ಬಗ್ಗೆ ಮಾಹಿತಿ ಬೇಕು. ದಯವಿಟ್ಟು ಬೆಲೆ ಮತ್ತು ಪ್ರಸ್ತುತ ಲಭ್ಯತೆ ತಿಳಿಸಿ.`
@@ -42,9 +44,9 @@ export default function PlantCard({
   return (
     <article className="plant-card">
       <div className="plant-image">
-        {plant.imageUrl ? (
+        {imageUrl ? (
           <img
-            src={plant.imageUrl}
+            src={imageUrl}
             alt={isKannada ? plant.nameKn : plant.nameEn}
             loading="lazy"
           />

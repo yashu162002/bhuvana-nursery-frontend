@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Menu, Phone, X } from 'lucide-react'
 import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion } from '../../lib/gsap'
@@ -31,6 +31,7 @@ export default function SiteHeader({ solid = false, ready = true }: SiteHeaderPr
 
   const root = useRef<HTMLDivElement>(null)
   const menu = useRef<HTMLDivElement>(null)
+  const burger = useRef<HTMLButtonElement>(null)
   const menuMounted = useRef(false)
   const openRef = useRef(false)
 
@@ -117,8 +118,36 @@ export default function SiteHeader({ solid = false, ready = true }: SiteHeaderPr
     { scope: root, dependencies: [open] },
   )
 
-  function handleNav(event: React.MouseEvent, id: string) {
+  /**
+   * Move focus out of the menu before it becomes aria-hidden. Closing while a
+   * descendant still has focus triggers the browser's "Blocked aria-hidden"
+   * warning and leaves keyboard users on a hidden element.
+   */
+  function closeMenu() {
+    if (menu.current?.contains(document.activeElement)) {
+      burger.current?.focus()
+    }
     setOpen(false)
+  }
+
+  useEffect(() => {
+    if (!open) return
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return
+      event.preventDefault()
+      if (menu.current?.contains(document.activeElement)) {
+        burger.current?.focus()
+      }
+      setOpen(false)
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [open])
+
+  function handleNav(event: React.MouseEvent, id: string) {
+    closeMenu()
     if (!isHome) return // let <Link> navigate to "/#id"
     event.preventDefault()
     // Close the menu first on mobile, then glide to the section.
@@ -142,9 +171,8 @@ export default function SiteHeader({ solid = false, ready = true }: SiteHeaderPr
         <Link
           className="lx-brand"
           to="/"
-          aria-label="Bhoovana Nursery home"
           onClick={(event) => {
-            setOpen(false)
+            closeMenu()
             if (isHome) {
               event.preventDefault()
               scrollToTarget(0)
@@ -152,7 +180,7 @@ export default function SiteHeader({ solid = false, ready = true }: SiteHeaderPr
           }}
         >
           <span className="lx-brand-mark">
-            <img src="/logo.png" alt="Bhoovana Nursery Logo" className="lx-brand-logo-img" />
+            <img src="/logo.png" alt="" className="lx-brand-logo-img" />
           </span>
           <span className="lx-brand-copy">
             <strong>{isKannada ? 'ಭೂವನ ನರ್ಸರಿ' : 'Bhoovana Nursery'}</strong>
@@ -178,7 +206,7 @@ export default function SiteHeader({ solid = false, ready = true }: SiteHeaderPr
             type="button"
             className="lx-lang"
             onClick={toggle}
-            aria-label="Switch website language"
+            aria-label="Switch website language (ಕನ್ನಡ / EN)"
           >
             <span className={isKannada ? 'is-on' : ''}>ಕನ್ನಡ</span>
             <i />
@@ -190,6 +218,7 @@ export default function SiteHeader({ solid = false, ready = true }: SiteHeaderPr
           </Link>
 
           <button
+            ref={burger}
             type="button"
             className="lx-burger"
             onClick={() => setOpen((value) => !value)}
@@ -226,7 +255,7 @@ export default function SiteHeader({ solid = false, ready = true }: SiteHeaderPr
               <Phone size={16} /> {siteConfig.phoneNumber}
             </a>
           )}
-          <Link to="/admin/login" onClick={() => setOpen(false)} tabIndex={open ? 0 : -1}>
+          <Link to="/admin/login" onClick={closeMenu} tabIndex={open ? 0 : -1}>
             Admin
           </Link>
         </div>

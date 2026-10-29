@@ -2082,6 +2082,41 @@ a:focus-visible {
   text-decoration: none;
 }
 
+/* Password reset flow */
+
+.admin-login-notice {
+  margin: 10px 0;
+  padding: 12px 14px;
+  border: 1px solid #cfe3cd;
+  border-radius: 9px;
+  background: #eef6ea;
+  color: #245c37;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.admin-login-links {
+  margin: 18px 0 0;
+  text-align: center;
+}
+
+.admin-forgot-link {
+  color: #315f3c;
+  font-size: 0.88rem;
+  text-decoration: none;
+}
+
+.admin-forgot-link:hover {
+  text-decoration: underline;
+}
+
+.admin-login-hint {
+  margin: 4px 0 0;
+  color: #69766b;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
 /* Admin dashboard */
 
 .admin-dashboard {

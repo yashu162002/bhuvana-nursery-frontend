@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Leaf, MessageCircle } from 'lucide-react';
 import { getPlantBySlug } from '../../api/plantApi';
-import { siteConfig } from '../../config/siteConfig';
+import { assetUrl, siteConfig } from '../../config/siteConfig';
 import { createPlantWhatsAppUrl } from '../../utils/whatsapp';
 import type { Plant } from './plantTypes';
 import { gsap, useGSAP, prefersReducedMotion } from '../../lib/gsap';
@@ -28,26 +28,28 @@ export default function PlantDetailPage({
 }: PlantDetailPageProps) {
   const { slug } = useParams<{ slug: string }>();
   const [plant, setPlant] = useState<Plant | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loadedSlug, setLoadedSlug] = useState<string | null>(null);
   const [error, setError] = useState('');
   const page = useRef<HTMLElement>(null);
+  // Derived rather than written in the effect: a plant is loading until the
+  // response for the current slug has been applied (or failed).
+  const isLoading = Boolean(slug) && loadedSlug !== slug;
 
   useEffect(() => {
     let cancelled = false;
 
+    // Without a slug there is nothing to fetch; the render below shows the
+    // not-found state directly.
     if (!slug) {
-      setError(kannada ? 'ಸಸ್ಯದ ವಿವರಗಳು ಲಭ್ಯವಿಲ್ಲ.' : 'Plant not found.');
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setError('');
-    setPlant(null);
-
     getPlantBySlug(slug)
       .then((data) => {
-        if (!cancelled) setPlant(data);
+        if (!cancelled) {
+          setPlant(data);
+          setError('');
+        }
       })
       .catch((requestError: unknown) => {
         if (!cancelled) {
@@ -72,7 +74,7 @@ export default function PlantDetailPage({
         }
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadedSlug(slug);
       });
 
     return () => {
@@ -109,7 +111,7 @@ export default function PlantDetailPage({
     { scope: page, dependencies: [plant?.id] },
   );
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Shell>
         <main className="plant-detail-state" role="status">
@@ -160,7 +162,7 @@ export default function PlantDetailPage({
           <div className="plant-detail-image">
             {plant.imageUrl ? (
               <img
-                src={plant.imageUrl}
+                src={assetUrl(plant.imageUrl) ?? plant.imageUrl}
                 alt={kannada ? plant.nameKn : plant.nameEn}
               />
             ) : (

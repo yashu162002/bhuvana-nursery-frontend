@@ -20,6 +20,7 @@ import {
   type PlantFormData,
 } from '../../api/adminPlantApi';
 import { uploadPlantImage } from '../../api/imageUploadApi';
+import { assetUrl } from '../../config/siteConfig';
 import type { PlantCategory } from '../plants/plantTypes';
 
 const emptyForm: PlantFormData = {
@@ -53,9 +54,6 @@ export default function PlantManagement() {
   const imageInputRef = useRef<HTMLInputElement | null>(null);
 
   const loadData = useCallback(async () => {
-    setLoading(true);
-    setError('');
-
     try {
       const [plantData, categoryData] = await Promise.all([
         getAdminPlants(),
@@ -64,6 +62,7 @@ export default function PlantManagement() {
 
       setPlants(plantData);
       setCategories(categoryData);
+      setError('');
     } catch {
       setError(
         'Could not load admin data. Confirm you are signed in and the backend is running.',
@@ -74,8 +73,30 @@ export default function PlantManagement() {
   }, []);
 
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    let active = true;
+
+    Promise.all([getAdminPlants(), getPlantCategories()])
+      .then(([plantData, categoryData]) => {
+        if (!active) return;
+        setPlants(plantData);
+        setCategories(categoryData);
+        setError('');
+      })
+      .catch(() => {
+        if (active) {
+          setError(
+            'Could not load admin data. Confirm you are signed in and the backend is running.',
+          );
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   function beginCreate() {
     setEditingId(null);
@@ -431,7 +452,7 @@ export default function PlantManagement() {
                   {form.imageUrl && (
                     <div className="plant-image-preview">
                       <img
-                        src={form.imageUrl}
+                        src={assetUrl(form.imageUrl) ?? form.imageUrl}
                         alt="Plant preview"
                         onError={(e) => {
                           e.currentTarget.style.display = 'none';
@@ -579,7 +600,7 @@ export default function PlantManagement() {
                       <td>
                         <div className="plant-admin-name">
                           {plant.imageUrl ? (
-                            <img src={plant.imageUrl} alt="" loading="lazy" />
+                            <img src={assetUrl(plant.imageUrl) ?? plant.imageUrl} alt="" loading="lazy" />
                           ) : (
                             <span className="plant-admin-no-image">🌱</span>
                           )}

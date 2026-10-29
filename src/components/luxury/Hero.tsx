@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { gsap, useGSAP, prefersReducedMotion } from '../../lib/gsap'
 import { heroSlides, type HeroSlide } from '../../config/media'
+import { assetUrl } from '../../config/siteConfig'
 import { getHeroSlides } from '../../api/adminHeroSlideApi'
 import WordReveal from './WordReveal'
 
@@ -73,7 +74,7 @@ export default function Hero({
         if (Array.isArray(data) && data.length > 0) {
           setSlides(
             data.map((item) => ({
-              src: item.imageUrl,
+              src: assetUrl(item.imageUrl) ?? item.imageUrl,
               kn: item.titleKn?.trim() || item.altText?.trim() || 'ಹಸಿರು ಸಸ್ಯಲೋಕ',
               en: item.titleEn?.trim() || item.altText?.trim() || 'Bhuvana Nursery',
             })),
@@ -94,12 +95,25 @@ export default function Hero({
 
   // Preload every photo; anything that fails to load is skipped for good.
   useEffect(() => {
-    setFailed(new Set())
+    let active = true
+
+    // Defer the reset by one microtask: React's lint rule flags synchronous
+    // setState inside an effect because it causes a cascading render.
+    queueMicrotask(() => {
+      if (active) setFailed(new Set())
+    })
+
     slides.forEach((slide, index) => {
       const image = new Image()
-      image.onerror = () => setFailed((previous) => new Set(previous).add(index))
+      image.onerror = () => {
+        if (active) setFailed((previous) => new Set(previous).add(index))
+      }
       image.src = slide.src
     })
+
+    return () => {
+      active = false
+    }
   }, [slides])
 
   /* ---- slideshow engine ------------------------------------ */
@@ -327,7 +341,7 @@ export default function Hero({
     ? [
         { text: 'ನಿಮ್ಮ ತೋಟದ' },
         { text: 'ಹಸಿರು ಕನಸುಗಳಿಗೆ' },
-        { text: 'ಭೂವನ	 ನರ್ಸರಿ.', accent: true },
+        { text: 'ಭೂವನ ನರ್ಸರಿ.', accent: true },
       ]
     : [
         { text: 'Grow your' },
