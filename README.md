@@ -13,6 +13,19 @@ admin area for plants, categories, hero slides and image uploads.
 | Email | Gmail SMTP (Google App Password) for admin password resets |
 | Hosting | Netlify (frontend) + Render (Docker backend) |
 
+## Repository layout
+
+| Path | Contents |
+|---|---|
+| `backend/` | Spring Boot API, Flyway migrations, Dockerfile |
+| `frontend/` | React + Vite single-page app (public site and admin area) |
+| `netlify.toml`, `render.yaml` | Deployment configuration |
+
+Both `backend/` and `frontend/` are ordinary directories tracked by this
+repository. The frontend's standalone Git history (previously a nested
+repository) was merged into this one, so `frontend/` no longer needs its own
+remote to be deployed.
+
 ## Local development
 
 Backend (from `backend/`):
@@ -38,13 +51,30 @@ empty.
 
 ```bash
 cd backend
-./mvnw test               # 85 tests (auth, reset, CRUD, storage, CORS, migrations)
+./mvnw test               # auth, reset, CRUD, storage, CORS, migrations
 
 cd ../frontend
 npm run lint
 npx tsc -b
 npm run build
 ```
+
+The backend test profile expects `TEST_DB_USERNAME` / `TEST_DB_PASSWORD` for a
+disposable database; see `PRODUCTION_READINESS_REPORT.md` if the context fails
+to start.
+
+## Frontend tooling
+
+The app is built with Vite's React + TypeScript template:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react)
+  (Oxc) is enabled in `vite.config.ts`.
+- The React Compiler is not enabled by default; see the
+  [React Compiler guide](https://react.dev/learn/react-compiler/installation)
+  before turning it on.
+- `eslint.config.js` uses the recommended flat config. Type-aware rules can be
+  enabled later with `tseslint.configs.recommendedTypeChecked`, and
+  `eslint-plugin-react-x` / `eslint-plugin-react-dom` add React-specific checks.
 
 ## Deployment
 
@@ -75,10 +105,3 @@ Key files: `netlify.toml`, `render.yaml`, `backend/Dockerfile`,
   session-revocation registry are in memory.
 - If a credential is ever exposed, rotate it. A Gmail App Password can be revoked
   at <https://myaccount.google.com/apppasswords>.
-
-## Repository note
-
-`frontend/` is currently a nested Git repository and is not tracked by the root
-repository. Before deploying from the root repo, either add the frontend to it
-or connect Netlify directly to the frontend repository — see the deployment
-guide. No commits or pushes are made automatically.
