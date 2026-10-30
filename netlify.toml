@@ -1,9 +1,10 @@
 # Netlify configuration for the Bhuvana Nursery frontend.
 #
 # Deploy the monorepo and let Netlify use the `frontend` directory as its base.
-# Replace REPLACE-WITH-YOUR-RENDER-SERVICE with the actual Render hostname
-# (for example bhuvana-nursery-api.onrender.com). Netlify does not substitute
-# environment variables inside redirect targets, so this one edit is required.
+# The proxy destination below must be the real Render service hostname. It is
+# set to the confirmed production service: bhuvana-nursery-api1.onrender.com.
+# Netlify does not substitute environment variables inside redirect targets,
+# so if the Render service is ever renamed, update both redirects by hand.
 #
 # The /api and /uploads proxy keeps the browser on one origin. That is what
 # makes the HttpOnly session cookie and the CSRF cookie first-party; do not
@@ -21,7 +22,7 @@
 # API proxy (preserves /api/v1/... and query strings).
 [[redirects]]
   from = "/api/*"
-  to = "https://REPLACE-WITH-YOUR-RENDER-SERVICE.onrender.com/api/:splat"
+  to = "https://bhuvana-nursery-api1.onrender.com/api/:splat"
   status = 200
   force = true
 
@@ -29,7 +30,7 @@
 # use absolute URLs, so this proxy mainly keeps older records working.
 [[redirects]]
   from = "/uploads/*"
-  to = "https://REPLACE-WITH-YOUR-RENDER-SERVICE.onrender.com/uploads/:splat"
+  to = "https://bhuvana-nursery-api1.onrender.com/uploads/:splat"
   status = 200
   force = true
 
