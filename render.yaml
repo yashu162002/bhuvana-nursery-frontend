@@ -56,3 +56,14 @@ services:
         value: auto
       - key: CORS_ALLOWED_ORIGINS
         value: ""
+      # Cookie and proxy settings for the Netlify → Render same-origin proxy.
+      # Secure=true requires HTTPS (guaranteed on Render). SameSite=Lax works
+      # because Netlify proxies requests from the same origin as the frontend.
+      - key: SECURE_COOKIES
+        value: "true"
+      - key: COOKIE_SAME_SITE
+        value: "Lax"
+      # Render sits behind a load balancer; trust its X-Forwarded-For header
+      # for accurate client-IP rate limiting.
+      - key: TRUST_FORWARDED_FOR
+        value: "true"

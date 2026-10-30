@@ -327,10 +327,14 @@ sessions and rate limiting (for example Redis); this is not implemented.
    - SPA fallback (`/* → /index.html 200`)
    - `/api/*` and `/uploads/*` proxy to Render
    - basic security headers
-4. **Required edit:** replace
-   `REPLACE-WITH-YOUR-RENDER-SERVICE.onrender.com` in `netlify.toml` with the
-   real Render hostname. Netlify does not substitute environment variables in
-   redirect targets.
+4. The proxy destination in `netlify.toml` is pre-set to
+   `https://bhuvana-nursery-api1.onrender.com`, the confirmed Render service
+   URL. If the Render service is renamed, update both redirects by
+   hand — Netlify does not substitute environment variables in redirect targets.
+   Netlify reads configuration from both the base directory and the repository
+   root, and a root-level `base` setting overrides the UI value, so the `/api`
+   proxy applies either way. Leaving **Base directory** empty is still the
+   simplest setup.
 5. Leave `VITE_API_BASE_URL` unset (or `/api/v1`). The proxy keeps the browser
    on one origin, so the session and CSRF cookies stay first-party.
 6. Deploy. Verify:
