@@ -1,0 +1,403 @@
+/* ==========================================================================
+   CatalogueLoader — inline backend wake-up loader for the plant catalogue.
+   All selectors are prefixed `cl-` — nothing global is touched.
+   Animations use transform / opacity only (compositor-friendly).
+   ========================================================================== */
+
+.cl-loader {
+  --cl-ink:      #0b1a12;
+  --cl-forest:   #12301f;
+  --cl-moss:     #1f4a31;
+  --cl-leaf-clr: #3f7a4f;
+  --cl-sage:     #a9bc95;
+  --cl-ivory:    #f8f4e9;
+  --cl-cream:    #efe8d4;
+  --cl-gold:     #c8a45d;
+  --cl-gold-deep:#8a6a24;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 540px;
+  overflow: hidden;
+  background: var(--cl-ivory);
+  border-radius: 20px;
+  color: var(--cl-forest);
+  font-family: 'Anek Kannada', 'Noto Sans Kannada', 'Jost', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  animation: cl-in 0.45s ease-out both;
+}
+
+.cl-loader *,
+.cl-loader *::before,
+.cl-loader *::after {
+  box-sizing: border-box;
+}
+
+@keyframes cl-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------------------------------------------------ hidden defs */
+
+.cl-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+/* ------------------------------------------------------------ background */
+
+.cl-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.cl-glow {
+  position: absolute;
+  width: 70vmax;
+  height: 70vmax;
+  border-radius: 50%;
+  will-change: transform;
+}
+
+.cl-glow--a {
+  left: -30vmax;
+  top: -40vmax;
+  background: radial-gradient(closest-side, rgba(169,188,149,.45), transparent);
+  animation: cl-drift-a 26s ease-in-out infinite alternate;
+}
+
+.cl-glow--b {
+  right: -35vmax;
+  bottom: -45vmax;
+  background: radial-gradient(closest-side, rgba(200,164,93,.22), transparent);
+  animation: cl-drift-b 32s ease-in-out infinite alternate;
+}
+
+@keyframes cl-drift-a { to { transform: translate3d(12vmax, 8vmax, 0); } }
+@keyframes cl-drift-b { to { transform: translate3d(-10vmax,-8vmax, 0); } }
+
+.cl-leaf {
+  position: absolute;
+  left: var(--x);
+  top:  var(--y);
+  width: var(--s);
+  height: calc(var(--s) * 1.16);
+  fill:  var(--cl-moss);
+  color: var(--cl-moss);
+  opacity: 0.09;
+  transform: rotate(var(--r));
+  will-change: transform;
+  animation: cl-float var(--d) ease-in-out var(--t) infinite alternate;
+}
+
+@keyframes cl-float {
+  from { transform: translate3d(0,0,0)   rotate(var(--r)); }
+  to   { transform: translate3d(8px,-18px,0) rotate(calc(var(--r) + 12deg)); }
+}
+
+.cl-seed {
+  position: absolute;
+  left: var(--x);
+  bottom: -10px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--cl-gold);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: cl-rise var(--d) linear var(--t) infinite;
+}
+
+@keyframes cl-rise {
+  0%   { transform: translate3d(0,0,0);          opacity: 0;    }
+  12%  { opacity: 0.5; }
+  88%  { opacity: 0.35; }
+  100% { transform: translate3d(20px,-90vh,0);   opacity: 0;    }
+}
+
+/* ------------------------------------------------------------------ card */
+
+.cl-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 520px;
+  margin: auto;
+  padding: clamp(24px, 5vh, 48px) clamp(20px, 5vw, 40px);
+  text-align: center;
+}
+
+.cl-logo {
+  width: clamp(110px, 28vw, 180px);
+  max-height: 14vh;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: clamp(8px, 1.8vh, 18px);
+  animation: cl-rise-in 0.85s cubic-bezier(0.16,1,0.3,1) 0.1s both;
+}
+
+.cl-title {
+  margin: 0;
+  max-width: 24ch;
+  font-family: 'Noto Serif Kannada', 'Tiro Kannada', 'Noto Sans Kannada', serif;
+  font-weight: 700;
+  font-size: clamp(1.15rem, 0.9rem + 2vw, 1.9rem);
+  line-height: 1.55;
+  color: var(--cl-forest);
+  text-wrap: balance;
+  animation: cl-rise-in 0.85s cubic-bezier(0.16,1,0.3,1) 0.22s both;
+}
+
+.cl-sub {
+  margin: clamp(3px, 0.6vh, 8px) 0 0;
+  font-size: clamp(0.95rem, 0.88rem + 0.4vw, 1.1rem);
+  font-weight: 500;
+  color: var(--cl-moss);
+  animation: cl-rise-in 0.85s cubic-bezier(0.16,1,0.3,1) 0.36s both;
+}
+
+@keyframes cl-rise-in {
+  from { opacity: 0; transform: translate3d(0,12px,0); }
+  to   { opacity: 1; transform: translate3d(0,0,0); }
+}
+
+/* ------------------------------------------------------------------ dial */
+
+.cl-dial {
+  position: relative;
+  display: grid;
+  place-items: center;
+  --cl-dial: min(clamp(156px, 46vw, 260px), 30vh);
+  width: var(--cl-dial);
+  height: var(--cl-dial);
+  margin: clamp(14px, 2.6vh, 30px) 0 clamp(10px, 2vh, 24px);
+  animation: cl-rise-in 0.9s cubic-bezier(0.16,1,0.3,1) 0.5s both;
+}
+
+.cl-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  overflow: visible;
+}
+
+.cl-ring circle {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.cl-ring-track {
+  stroke: rgba(18,48,31,.1);
+  stroke-width: 5;
+}
+
+.cl-ring-fill {
+  stroke: var(--cl-moss);
+  stroke-width: 5;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 0;
+  /* Drains from full (03:00) to empty (00:00) in exactly 180 s */
+  animation-name: cl-drain;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@keyframes cl-drain {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: 100; }
+}
+
+/* After 00:00: slowly orbiting gold arc */
+.cl-ring-wait {
+  stroke: var(--cl-gold);
+  stroke-width: 5;
+  stroke-dasharray: 18 82;
+  opacity: 0;
+  transform-origin: 50% 50%;
+}
+
+.cl-overtime .cl-ring-wait {
+  opacity: 1;
+  animation: cl-orbit 2.6s linear infinite;
+}
+
+@keyframes cl-orbit { to { transform: rotate(360deg); } }
+
+.cl-pulse {
+  position: absolute;
+  inset: 11%;
+  border-radius: 50%;
+  border: 1px solid rgba(200,164,93,.45);
+  will-change: transform, opacity;
+  animation: cl-pulse 3.4s ease-out infinite;
+}
+
+@keyframes cl-pulse {
+  0%   { transform: scale(0.94); opacity: 0.65; }
+  100% { transform: scale(1.16); opacity: 0; }
+}
+
+.cl-dial-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.cl-time {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 600;
+  font-size: calc(var(--cl-dial) * 0.27);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--cl-forest);
+}
+
+.cl-time-label {
+  font-size: clamp(0.75rem, 0.7rem + 0.28vw, 0.9rem);
+  font-weight: 500;
+  color: var(--cl-gold-deep);
+}
+
+/* --------------------------------------------------------------- message */
+
+.cl-message {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 8px;
+  min-height: 3em;
+  max-width: 32ch;
+  margin: 0;
+  font-size: clamp(0.95rem, 0.88rem + 0.45vw, 1.12rem);
+  font-weight: 500;
+  line-height: 1.7;
+  color: var(--cl-forest);
+  animation: cl-swap 0.85s ease-out both;
+}
+
+.cl-message-icon {
+  flex: none;
+  width: 16px;
+  height: 19px;
+  margin-top: 0.4em;
+  fill:  var(--cl-leaf-clr);
+  color: var(--cl-leaf-clr);
+}
+
+@keyframes cl-swap {
+  from { opacity: 0; transform: translate3d(0,5px,0); }
+  to   { opacity: 1; transform: translate3d(0,0,0); }
+}
+
+/* ---------------------------------------------------------- progress bar */
+
+.cl-bar {
+  display: block;
+  width: min(260px, 60vw);
+  height: 2px;
+  margin-top: clamp(12px, 2.4vh, 24px);
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgba(18,48,31,.1);
+}
+
+.cl-bar::after {
+  content: '';
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--cl-gold), transparent);
+  will-change: transform;
+  animation: cl-sweep 2.2s ease-in-out infinite;
+}
+
+@keyframes cl-sweep {
+  from { transform: translate3d(-100%,0,0); }
+  to   { transform: translate3d(250%,0,0); }
+}
+
+/* --------------------------------------------------------------- retry */
+
+.cl-retry {
+  margin-top: 14px;
+  min-height: 42px;
+  padding: 8px 24px;
+  border: 1px solid var(--cl-forest);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cl-forest);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.cl-retry:hover  { background: var(--cl-forest); color: var(--cl-ivory); }
+.cl-retry:focus-visible { outline: 3px solid var(--cl-gold); outline-offset: 3px; }
+
+/* -------------------------------------------------------- screen reader */
+
+.cl-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ----------------------------------------------------- reduced motion -- */
+
+@media (prefers-reduced-motion: reduce) {
+  .cl-glow,
+  .cl-leaf,
+  .cl-seed,
+  .cl-pulse,
+  .cl-bar::after {
+    animation: none;
+  }
+
+  .cl-seed { display: none; }
+  .cl-leaf { opacity: 0.07; }
+  .cl-bar::after { width: 100%; opacity: 0.4; }
+
+  .cl-loader,
+  .cl-logo,
+  .cl-title,
+  .cl-sub,
+  .cl-dial,
+  .cl-message {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
+
+  .cl-overtime .cl-ring-wait { animation: none; stroke-dasharray: 100; }
+}
+
+/* ---------------------------------------------------- short screens ---- */
+
+@media (max-height: 520px) {
+  .cl-loader { min-height: 360px; }
+  .cl-dial   { --cl-dial: min(clamp(130px, 38vw, 200px), 48vh); }
+  .cl-logo   { max-height: 18vh; }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ChevronLeft, ChevronRight, Leaf, Search } from 'lucide-react'
 import { getCategories, getPlants } from '../../api/plantApi'
@@ -6,6 +6,7 @@ import { assetUrl } from '../../config/siteConfig'
 import { createPlantWhatsAppUrl } from '../../utils/whatsapp'
 import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion } from '../../lib/gsap'
 import WordReveal from '../../components/luxury/WordReveal'
+import CatalogueLoader from './CatalogueLoader'
 import type {
   Plant,
   PlantCategory,
@@ -56,6 +57,9 @@ export default function PlantCatalogue({
   const [loadedKey, setLoadedKey] = useState('')
   const [error, setError] = useState('')
   const [retryCount, setRetryCount] = useState(0)
+  // True once the backend has responded (either via the probe or a direct API success).
+  const [backendReady, setBackendReady] = useState(false)
+  const handleBackendReady = useCallback(() => setBackendReady(true), [])
 
   // Loading is derived (rather than written inside the effect), so a request
   // that is in flight is always reflected without an extra render pass.
@@ -98,6 +102,8 @@ export default function PlantCatalogue({
   useEffect(() => {
     let cancelled = false
 
+    if (!backendReady) return
+
     getCategories()
       .then((data) => {
         if (!cancelled) setCategories(data)
@@ -115,10 +121,12 @@ export default function PlantCatalogue({
     return () => {
       cancelled = true
     }
-  }, [kannada, retryCount])
+  }, [kannada, retryCount, backendReady])
 
   useEffect(() => {
     let cancelled = false
+
+    if (!backendReady) return
 
     getPlants({
       page,
@@ -150,7 +158,7 @@ export default function PlantCatalogue({
     return () => {
       cancelled = true
     }
-  }, [page, search, category, kannada, retryCount])
+  }, [page, search, category, kannada, retryCount, backendReady])
 
   function submitSearch(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -230,7 +238,12 @@ export default function PlantCatalogue({
         ))}
       </div>
 
-      {visibleError && (
+      {/* ---- Backend wake-up loader (Render cold start) ---- */}
+      {!backendReady && (
+        <CatalogueLoader onReady={handleBackendReady} />
+      )}
+
+      {visibleError && backendReady && (
         <div className="catalogue-message catalogue-error" role="alert">
           <p>{visibleError}</p>
           <button
@@ -242,14 +255,14 @@ export default function PlantCatalogue({
         </div>
       )}
 
-      {loading && (
+      {loading && backendReady && (
         <div className="catalogue-message" role="status">
           <span className="catalogue-spinner" />
           {kannada ? 'ಸಸ್ಯಗಳನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...' : 'Loading plants...'}
         </div>
       )}
 
-      {!loading && !visibleError && catalogue.content.length === 0 && (
+      {!loading && !visibleError && backendReady && catalogue.content.length === 0 && (
         <div className="catalogue-message">
           {kannada
             ? 'ಈ ಹುಡುಕಾಟಕ್ಕೆ ಸಸ್ಯಗಳು ಕಂಡುಬಂದಿಲ್ಲ.'
@@ -257,7 +270,7 @@ export default function PlantCatalogue({
         </div>
       )}
 
-      {!loading && !error && catalogue.content.length > 0 && (
+      {!loading && !error && backendReady && catalogue.content.length > 0 && (
         <>
           <div className="catalogue-grid">
             {catalogue.content.map((plant) => (
