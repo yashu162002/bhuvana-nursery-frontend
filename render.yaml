@@ -41,19 +41,15 @@ services:
       - key: APP_BASE_URL
         sync: false
       - key: IMAGE_STORAGE
-        value: r2
-      - key: R2_ENDPOINT
+        value: imagekit
+      - key: IMAGEKIT_PUBLIC_KEY
         sync: false
-      - key: R2_BUCKET
+      - key: IMAGEKIT_PRIVATE_KEY
         sync: false
-      - key: R2_ACCESS_KEY_ID
-        sync: false
-      - key: R2_SECRET_ACCESS_KEY
-        sync: false
-      - key: R2_PUBLIC_BASE_URL
-        sync: false
-      - key: R2_REGION
-        value: auto
+      - key: IMAGEKIT_URL_ENDPOINT
+        value: "https://ik.imagekit.io/z4zsfccp1"
+      - key: IMAGEKIT_FOLDER
+        value: "/bhuvana-nursery/uploads"
       - key: CORS_ALLOWED_ORIGINS
         value: ""
       # Cookie and proxy settings for the Netlify → Render same-origin proxy.

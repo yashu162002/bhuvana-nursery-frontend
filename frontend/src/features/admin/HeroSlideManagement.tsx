@@ -118,6 +118,11 @@ export default function HeroSlideManagement() {
     const slide = slides.find((s) => s.id === slideId);
     if (!slide) return;
 
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Choose a JPEG, PNG, or WebP image.');
+      return;
+    }
+
     if (file.size > 5 * 1024 * 1024) {
       setError('Image must be under 5 MB in size.');
       return;
@@ -155,6 +160,11 @@ export default function HeroSlideManagement() {
 
     const file = event.dataTransfer.files?.[0];
     if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Choose a JPEG, PNG, or WebP image.');
+      return;
+    }
 
     if (file.size > 5 * 1024 * 1024) {
       setError('Image must be under 5 MB in size.');
@@ -248,6 +258,11 @@ export default function HeroSlideManagement() {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file) return;
+
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Choose a JPEG, PNG, or WebP image.');
+      return;
+    }
 
     if (file.size > 5 * 1024 * 1024) {
       setError('Image must be under 5 MB.');
@@ -352,7 +367,7 @@ export default function HeroSlideManagement() {
         <input
           ref={slotFileInputRef}
           type="file"
-          accept="image/jpeg,image/png"
+          accept="image/jpeg,image/png,image/webp"
           onChange={handleSlotFileChange}
           style={{ display: 'none' }}
         />
@@ -544,8 +559,10 @@ export default function HeroSlideManagement() {
                     <div className="hero-slide-meta">
                       <span className="hero-slide-url-preview" title={slide.imageUrl}>
                         {slide.imageUrl.startsWith('/uploads/')
-                          ? 'Uploaded photo'
-                          : 'Remote image URL'}
+                          ? 'Local upload (legacy)'
+                          : slide.imageUrl.startsWith('https://ik.imagekit.io/')
+                            ? 'ImageKit cloud photo ✓'
+                            : 'Remote image URL'}
                       </span>
                     </div>
                   </div>
@@ -653,7 +670,7 @@ export default function HeroSlideManagement() {
                     <input
                       ref={modalFileInputRef}
                       type="file"
-                      accept="image/jpeg,image/png"
+                      accept="image/jpeg,image/png,image/webp"
                       onChange={handleModalImageUpload}
                       style={{ display: 'none' }}
                       disabled={modalUploading}

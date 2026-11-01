@@ -28,13 +28,11 @@ declares the keys; values marked `sync: false` must be entered in the dashboard.
 | `SMTP_APP_PASSWORD` | R, S | `your-16-character-google-app-password` | Google **App Password**, not the normal Gmail password. Requires 2-Step Verification. |
 | `MAIL_FROM` | R | `your-gmail-address@gmail.com` | Envelope/header sender. Keep identical to `SMTP_USERNAME` (Gmail rejects arbitrary From addresses). Defaults to `SMTP_USERNAME` if omitted. |
 | `APP_BASE_URL` | R | `https://bhuvanursery.com` | Canonical public frontend URL. The reset link becomes `${APP_BASE_URL}/admin/reset-password?token=…`. No trailing slash required. |
-| `IMAGE_STORAGE` | R | `r2` | `r2` in production. `local` writes to Render's ephemeral disk and is development-only. |
-| `R2_ENDPOINT` | R, S | `https://<account-id>.r2.cloudflarestorage.com` | Cloudflare R2 S3 endpoint. |
-| `R2_BUCKET` | R | `bhuvana-nursery-images` | Bucket name. |
-| `R2_ACCESS_KEY_ID` | R, S | `your-r2-access-key-id` | R2 API token access key (Object Read & Write). |
-| `R2_SECRET_ACCESS_KEY` | R, S | `your-r2-secret-access-key` | R2 secret. Server-side only. |
-| `R2_PUBLIC_BASE_URL` | R | `https://images.bhuvanursery.com` | Public base URL of the bucket (r2.dev URL or custom domain). Stored image URLs are `${R2_PUBLIC_BASE_URL}/uploads/<uuid>.jpg`. |
-| `R2_REGION` | O | `auto` | R2 signing region; `auto` is correct for R2. |
+| `IMAGE_STORAGE` | R | `imagekit` | `imagekit` in production. `local` writes to Render's ephemeral disk and is development-only. |
+| `IMAGEKIT_PUBLIC_KEY` | R, S | `public_xxxxxxxxxxxx` | ImageKit public key. Found in ImageKit Dashboard → Developer Options. |
+| `IMAGEKIT_PRIVATE_KEY` | R, S | `private_xxxxxxxxxxxx` | ImageKit private key — **never** expose to the frontend or commit to source control. |
+| `IMAGEKIT_URL_ENDPOINT` | R | `https://ik.imagekit.io/z4zsfccp1` | ImageKit URL endpoint from Dashboard → URL endpoints. No trailing slash. |
+| `IMAGEKIT_FOLDER` | O | `/bhuvana-nursery/uploads` | Destination folder inside ImageKit. Defaults to `/bhuvana-nursery/uploads`. |
 | `CORS_ALLOWED_ORIGINS` | O | *(empty)* | Only for split-origin deployments. Comma-separated exact origins, e.g. `https://bhuvanursery.com`. Never `*`. Leave empty with the recommended Netlify proxy. |
 | `SECURE_COOKIES` | O | `true` | Overrides the prod default. Must be `true` on HTTPS. |
 | `COOKIE_SAME_SITE` | O | `Lax` | `Lax` behind the same-origin Netlify proxy. Use `None` only for a cross-site API (requires HTTPS + CORS). |
@@ -65,13 +63,11 @@ SMTP_USERNAME=your-gmail-address@gmail.com
 SMTP_APP_PASSWORD=replace-me
 MAIL_FROM=your-gmail-address@gmail.com
 APP_BASE_URL=https://bhuvanursery.com
-IMAGE_STORAGE=r2
-R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
-R2_BUCKET=bhuvana-nursery-images
-R2_ACCESS_KEY_ID=replace-me
-R2_SECRET_ACCESS_KEY=replace-me
-R2_PUBLIC_BASE_URL=https://images.bhuvanursery.com
-R2_REGION=auto
+IMAGE_STORAGE=imagekit
+IMAGEKIT_PUBLIC_KEY=replace-me
+IMAGEKIT_PRIVATE_KEY=replace-me
+IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/z4zsfccp1
+IMAGEKIT_FOLDER=/bhuvana-nursery/uploads
 CORS_ALLOWED_ORIGINS=
 ```
 

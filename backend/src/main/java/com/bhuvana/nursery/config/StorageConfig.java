@@ -1,5 +1,6 @@
 package com.bhuvana.nursery.config;
 
+import com.bhuvana.nursery.storage.ImageKitImageStorage;
 import com.bhuvana.nursery.storage.ImageStorage;
 import com.bhuvana.nursery.storage.LocalImageStorage;
 import com.bhuvana.nursery.storage.R2ImageStorage;
@@ -24,6 +25,9 @@ import java.util.List;
  *
  * <ul>
  *   <li>{@code local} (default) keeps development behaviour unchanged.</li>
+ *   <li>{@code imagekit} uploads to ImageKit cloud storage (recommended for production).
+ *       Requires {@code IMAGEKIT_PUBLIC_KEY}, {@code IMAGEKIT_PRIVATE_KEY},
+ *       and {@code IMAGEKIT_URL_ENDPOINT}.</li>
  *   <li>{@code r2} requires the R2_* variables; startup fails immediately with
  *       a clear message if one is missing, rather than silently writing images
  *       to an ephemeral Render filesystem.</li>
@@ -33,6 +37,10 @@ import java.util.List;
 public class StorageConfig {
 
     private static final Logger log = LoggerFactory.getLogger(StorageConfig.class);
+
+    // -------------------------------------------------------------------------
+    // Local (development default)
+    // -------------------------------------------------------------------------
 
     @Bean
     @ConditionalOnProperty(
@@ -47,6 +55,39 @@ public class StorageConfig {
         return new LocalImageStorage(Path.of(directory));
     }
 
+    // -------------------------------------------------------------------------
+    // ImageKit (recommended for production)
+    // -------------------------------------------------------------------------
+
+    @Bean
+    @ConditionalOnProperty(name = "app.storage.provider", havingValue = "imagekit")
+    public ImageStorage imageKitImageStorage(
+            @Value("${app.storage.imagekit.public-key:}") String publicKey,
+            @Value("${app.storage.imagekit.private-key:}") String privateKey,
+            @Value("${app.storage.imagekit.url-endpoint:}") String urlEndpoint,
+            @Value("${app.storage.imagekit.folder:/bhuvana-nursery/uploads}") String folder
+    ) {
+        requireNonBlank(
+                "imagekit",
+                "IMAGEKIT_PUBLIC_KEY", publicKey,
+                "IMAGEKIT_PRIVATE_KEY", privateKey,
+                "IMAGEKIT_URL_ENDPOINT", urlEndpoint
+        );
+
+        if (!urlEndpoint.startsWith("https://") && !urlEndpoint.startsWith("http://")) {
+            throw new IllegalStateException(
+                    "IMAGEKIT_URL_ENDPOINT must be a valid http(s) URL "
+                            + "(e.g. https://ik.imagekit.io/your-imagekit-id).");
+        }
+
+        log.info("Image storage: ImageKit (endpoint: {}, folder: {}).", urlEndpoint, folder);
+        return new ImageKitImageStorage(publicKey, privateKey, urlEndpoint, folder);
+    }
+
+    // -------------------------------------------------------------------------
+    // Cloudflare R2 (S3-compatible, alternative for production)
+    // -------------------------------------------------------------------------
+
     @Bean
     @ConditionalOnProperty(name = "app.storage.provider", havingValue = "r2")
     public S3Client r2S3Client(
@@ -55,7 +96,8 @@ public class StorageConfig {
             @Value("${app.storage.r2.access-key:}") String accessKey,
             @Value("${app.storage.r2.secret-key:}") String secretKey
     ) {
-        requireR2Configuration(
+        requireNonBlank(
+                "r2",
                 "R2_ENDPOINT", endpoint,
                 "R2_ACCESS_KEY_ID", accessKey,
                 "R2_SECRET_ACCESS_KEY", secretKey
@@ -77,7 +119,8 @@ public class StorageConfig {
             @Value("${app.storage.r2.bucket:}") String bucket,
             @Value("${app.storage.r2.public-base-url:}") String publicBaseUrl
     ) {
-        requireR2Configuration(
+        requireNonBlank(
+                "r2",
                 "R2_BUCKET", bucket,
                 "R2_PUBLIC_BASE_URL", publicBaseUrl
         );
@@ -93,7 +136,15 @@ public class StorageConfig {
         return new R2ImageStorage(r2S3Client, bucket, publicBaseUrl);
     }
 
-    private static void requireR2Configuration(String... namesAndValues) {
+    // -------------------------------------------------------------------------
+    // Shared validation helper
+    // -------------------------------------------------------------------------
+
+    /**
+     * Fails fast at startup with a clear message when required variables are missing,
+     * rather than letting images silently fall through to local/ephemeral storage.
+     */
+    private static void requireNonBlank(String provider, String... namesAndValues) {
         List<String> missing = new ArrayList<>();
 
         for (int index = 0; index < namesAndValues.length; index += 2) {
@@ -105,7 +156,8 @@ public class StorageConfig {
 
         if (!missing.isEmpty()) {
             throw new IllegalStateException(
-                    "IMAGE_STORAGE=r2 requires these environment variables: "
+                    "IMAGE_STORAGE=" + provider
+                            + " requires these environment variables to be set: "
                             + String.join(", ", missing));
         }
     }

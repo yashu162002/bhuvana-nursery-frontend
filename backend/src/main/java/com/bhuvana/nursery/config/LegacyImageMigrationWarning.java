@@ -41,7 +41,8 @@ public class LegacyImageMigrationWarning implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        if (!"r2".equalsIgnoreCase(storageProvider)) {
+        if (!"r2".equalsIgnoreCase(storageProvider)
+                && !"imagekit".equalsIgnoreCase(storageProvider)) {
             return;
         }
 

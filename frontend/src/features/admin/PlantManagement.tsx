@@ -139,8 +139,8 @@ export default function PlantManagement() {
   }
 
   async function uploadImage(file: File) {
-    if (!['image/jpeg', 'image/png'].includes(file.type)) {
-      setError('Choose a JPEG or PNG image.');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setError('Choose a JPEG, PNG, or WebP image.');
       return;
     }
 
@@ -428,7 +428,7 @@ export default function PlantManagement() {
 
               <div className="plant-editor-full">
                 <span className="plant-image-label">
-                  Plant image (JPEG or PNG, maximum 5 MB)
+                  Plant image (JPEG, PNG, or WebP – maximum 5 MB)
                 </span>
 
                 <div
@@ -443,7 +443,7 @@ export default function PlantManagement() {
                   <input
                     ref={imageInputRef}
                     type="file"
-                    accept="image/jpeg,image/png"
+                    accept="image/jpeg,image/png,image/webp"
                     onChange={handleImageUpload}
                     disabled={uploadingImage || saving}
                     hidden

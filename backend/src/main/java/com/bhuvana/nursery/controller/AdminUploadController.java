@@ -145,7 +145,11 @@ public class AdminUploadController {
             return new ImageFormat("image/jpeg", ".jpg");
         }
 
-        throw invalidImage("Only JPEG and PNG images are accepted.");
+        if ("webp".equals(normalized)) {
+            return new ImageFormat("image/webp", ".webp");
+        }
+
+        throw invalidImage("Only JPEG, PNG, and WebP images are accepted.");
     }
 
     private ResponseStatusException invalidImage(String message) {

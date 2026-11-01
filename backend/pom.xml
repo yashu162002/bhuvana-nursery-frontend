@@ -72,6 +72,13 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-mail</artifactId>
 		</dependency>
+		<!-- ImageKit cloud storage; used only when IMAGE_STORAGE=imagekit. -->
+		<dependency>
+			<groupId>io.imagekit</groupId>
+			<artifactId>image-kit-java</artifactId>
+			<version>3.7.0</version>
+		</dependency>
+
 		<!-- Cloudflare R2 is S3-compatible; used only when IMAGE_STORAGE=r2. -->
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
