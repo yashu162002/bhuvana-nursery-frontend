@@ -41,10 +41,10 @@ public class ImageKitImageStorage implements ImageStorage {
                 : urlEndpoint;
         this.folder = folder.startsWith("/") ? folder : "/" + folder;
 
+        // The 3.x SDK authenticates server-side calls with the private key only;
+        // the public key and URL endpoint are client-side upload settings.
         this.client = ImageKitOkHttpClient.builder()
-                .publicKey(publicKey)
                 .privateKey(privateKey)
-                .urlEndpoint(urlEndpoint)
                 .build();
     }
 
@@ -62,16 +62,19 @@ public class ImageKitImageStorage implements ImageStorage {
         try {
             FileUploadResponse response = client.files().upload(params);
 
-            if (response == null || response.getUrl() == null || response.getUrl().isBlank()) {
+            String url = response == null ? null : response.url().orElse(null);
+
+            if (url == null || url.isBlank()) {
                 throw new ImageStorageException(
                         "ImageKit upload succeeded but returned no URL.",
                         new IllegalStateException("Null or blank URL in ImageKit response"));
             }
 
             log.info("Uploaded image to ImageKit: fileId={}, path={}",
-                    response.getFileId(), response.getFilePath());
+                    response.fileId().orElse("unknown"),
+                    response.filePath().orElse("unknown"));
 
-            return new StoredImage(response.getUrl(), response.getName());
+            return new StoredImage(url, response.name().orElse(filename));
 
         } catch (ImageStorageException storageException) {
             throw storageException;
