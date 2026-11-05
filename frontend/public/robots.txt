@@ -1,3 +1,15 @@
+# robots.txt – Bhoovana Nursery (https://bhoovana.netlify.app/)
+
 User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /admin/
+Disallow: /admin/*
+Disallow: /api/
+Disallow: /api/*
+
+# Primary sitemap
+Sitemap: https://bhoovana.netlify.app/sitemap.xml
+
+# Crawl-delay (seconds) – be polite to crawlers
+Crawl-delay: 10

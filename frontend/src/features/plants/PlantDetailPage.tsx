@@ -8,6 +8,9 @@ import type { Plant } from './plantTypes';
 import { gsap, useGSAP, prefersReducedMotion } from '../../lib/gsap';
 import SiteHeader from '../../components/luxury/SiteHeader';
 import SiteFooter from '../../components/luxury/SiteFooter';
+import { useSEO } from '../../seo/useSEO';
+import { usePlantSchema } from '../../seo/useSchema';
+import { PLANT_DETAIL_SEO, NOT_FOUND_SEO, SEO_DEFAULT_OG_IMAGE } from '../../seo/seoConfig';
 
 function Shell({ children }: { children: ReactNode }) {
   return (
@@ -34,6 +37,39 @@ export default function PlantDetailPage({
   // Derived rather than written in the effect: a plant is loading until the
   // response for the current slug has been applied (or failed).
   const isLoading = Boolean(slug) && loadedSlug !== slug;
+
+  // ── SEO: dynamic meta for each plant page ─────────────────────────────
+  const plantSeoTitle = plant
+    ? PLANT_DETAIL_SEO.titleTemplate(plant.nameEn, plant.categoryNameEn)
+    : isLoading
+      ? 'Loading… | Bhoovana Nursery'
+      : NOT_FOUND_SEO.title;
+  const plantSeoDescription = plant
+    ? PLANT_DETAIL_SEO.descriptionTemplate(
+        plant.nameEn,
+        plant.categoryNameEn ?? 'Plants',
+        plant.scientificName,
+        plant.descriptionEn,
+      )
+    : NOT_FOUND_SEO.description;
+  const plantSeoCanonical = plant
+    ? PLANT_DETAIL_SEO.canonical(plant.slug)
+    : NOT_FOUND_SEO.canonical;
+  const plantSeoImage = plant?.imageUrl
+    ? (plant.imageUrl.startsWith('http') ? plant.imageUrl : SEO_DEFAULT_OG_IMAGE)
+    : SEO_DEFAULT_OG_IMAGE;
+
+  useSEO({
+    title: plantSeoTitle,
+    description: plantSeoDescription,
+    canonical: plantSeoCanonical,
+    ogImage: plantSeoImage,
+    ogType: 'product',
+    robots: plant ? undefined : 'noindex, follow',
+  });
+
+  // ── Schema.org Product JSON-LD ────────────────────────────────────────
+  usePlantSchema(plant);
 
   useEffect(() => {
     let cancelled = false;
@@ -163,7 +199,9 @@ export default function PlantDetailPage({
             {plant.imageUrl ? (
               <img
                 src={assetUrl(plant.imageUrl) ?? plant.imageUrl}
-                alt={kannada ? plant.nameKn : plant.nameEn}
+                alt={`${plant.nameEn}${plant.scientificName ? ` (${plant.scientificName})` : ''} – ${plant.categoryNameEn ?? 'Plant'} available at Bhoovana Nursery, Chitradurga`}
+                fetchPriority="high"
+                decoding="async"
               />
             ) : (
               <div className="plant-detail-placeholder">

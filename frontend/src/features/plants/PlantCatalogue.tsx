@@ -279,8 +279,9 @@ export default function PlantCatalogue({
                   {plant.imageUrl ? (
                     <img
                       src={assetUrl(plant.imageUrl) ?? plant.imageUrl}
-                      alt={kannada ? plant.nameKn : plant.nameEn}
+                      alt={`${plant.nameEn}${plant.scientificName ? ` (${plant.scientificName})` : ''} – ${plant.categoryNameEn ?? 'Plant'} at Bhoovana Nursery Chitradurga`}
                       loading="lazy"
+                      decoding="async"
                     />
                   ) : (
                     <div className="catalogue-image-placeholder">

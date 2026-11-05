@@ -10,6 +10,7 @@ import { useLanguage } from '../../context/languageContext'
 import CustomCursor from './CustomCursor'
 import ScrollProgress from './ScrollProgress'
 import FloatingWhatsApp from './FloatingWhatsApp'
+import { useLocalBusinessSchema } from '../../seo/useSchema'
 
 /**
  * Wraps every public page. Everything visual is scoped under `.lx`, so the
@@ -18,6 +19,9 @@ import FloatingWhatsApp from './FloatingWhatsApp'
 export default function PublicLayout() {
   const { language } = useLanguage()
   const { pathname, hash } = useLocation()
+
+  // ── Persistent LocalBusiness JSON-LD on every public page ─────────────
+  useLocalBusinessSchema()
 
   useEffect(() => {
     acquireSmoothScroll()

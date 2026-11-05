@@ -25,6 +25,8 @@ import Preloader from './components/luxury/Preloader'
 import SiteHeader from './components/luxury/SiteHeader'
 import SiteFooter from './components/luxury/SiteFooter'
 import WordReveal from './components/luxury/WordReveal'
+import { useSEO } from './seo/useSEO'
+import { HOME_SEO } from './seo/seoConfig'
 
 const WHATSAPP_NUMBER = siteConfig.whatsappNumber.replace(/\D/g, '')
 const PHONE_NUMBER = siteConfig.phoneNumber
@@ -51,6 +53,9 @@ function App() {
   const { isKannada } = useLanguage()
   const { hash } = useLocation()
   const root = useRef<HTMLDivElement>(null)
+
+  // ── SEO: update document head for home page ──────────────────────────────
+  useSEO(HOME_SEO)
 
   // Cinematic intro: once per browser session, skipped for #links / reduced motion.
   const [showIntro] = useState(

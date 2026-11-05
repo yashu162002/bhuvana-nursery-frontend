@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d1f16;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#1a3a28;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0d1f16;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#a8c5a0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c8b97a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)" />
+
+  <!-- Decorative circles -->
+  <circle cx="1050" cy="120" r="200" fill="none" stroke="#ffffff08" stroke-width="1"/>
+  <circle cx="1050" cy="120" r="140" fill="none" stroke="#ffffff05" stroke-width="1"/>
+  <circle cx="150" cy="510" r="160" fill="none" stroke="#ffffff06" stroke-width="1"/>
+
+  <!-- Leaf accent top-right -->
+  <g transform="translate(1000, 60) rotate(-30)" opacity="0.15">
+    <path d="M60 80 C30 80 14 60 14 32 C42 32 60 50 60 80 Z M60 134 C60 104 60 74 60 40" fill="#a8c5a0" stroke="none"/>
+  </g>
+  <g transform="translate(1080, 30) rotate(20)" opacity="0.1">
+    <path d="M60 58 C60 30 78 12 106 12 C106 40 88 58 60 58 Z M60 134 C60 104 60 74 60 40" fill="#c8b97a" stroke="none"/>
+  </g>
+
+  <!-- Horizontal rule top -->
+  <rect x="80" y="80" width="80" height="2" fill="url(#accent)" rx="1"/>
+
+  <!-- Eyebrow -->
+  <text x="80" y="128" font-family="Georgia, serif" font-size="18" fill="#a8c5a0" letter-spacing="4" text-anchor="start">PLANT NURSERY · CHITRADURGA</text>
+
+  <!-- Main brand name in Kannada -->
+  <text x="80" y="260" font-family="Georgia, serif" font-size="96" fill="#ffffff" text-anchor="start" font-weight="bold">ಭೂವನ ನರ್ಸರಿ</text>
+
+  <!-- English brand name -->
+  <text x="80" y="330" font-family="Georgia, serif" font-size="52" fill="url(#accent)" text-anchor="start">Bhoovana Nursery</text>
+
+  <!-- Tagline -->
+  <text x="80" y="400" font-family="Georgia, serif" font-size="24" fill="#ffffff80" text-anchor="start">Fruit Plants · Agricultural Plants · Trees · Organic Manure</text>
+
+  <!-- Horizontal rule bottom -->
+  <rect x="80" y="440" width="400" height="1" fill="#ffffff20" rx="1"/>
+
+  <!-- Contact info -->
+  <text x="80" y="490" font-family="Georgia, serif" font-size="22" fill="#a8c5a0" text-anchor="start">📞 +91 97401 14246</text>
+  <text x="80" y="525" font-family="Georgia, serif" font-size="20" fill="#ffffff60" text-anchor="start">Gonur, Chitradurga Taluk · Karnataka 577517</text>
+
+  <!-- Bottom right accent -->
+  <text x="1140" y="600" font-family="Georgia, serif" font-size="16" fill="#ffffff30" text-anchor="end">bhoovana.netlify.app</text>
+</svg>
