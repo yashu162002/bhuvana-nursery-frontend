@@ -40,7 +40,10 @@ export const HOME_SEO = {
 }
 
 export const PLANT_DETAIL_SEO = {
-  titleTemplate: (plantNameEn: string, categoryNameEn?: string) =>
+  // The category is intentionally not part of the title: the title already
+  // carries the plant name, location, and brand, and the category is used in
+  // the description and schema instead.
+  titleTemplate: (plantNameEn: string, _categoryNameEn?: string) =>
     `${plantNameEn} Plant – Buy ${plantNameEn} Sapling in Chitradurga | Bhoovana Nursery`,
   descriptionTemplate: (
     plantNameEn: string,
